@@ -19,6 +19,7 @@ from mxnet.gluon.contrib.rnn import VariationalDropoutCell
 from mxnet.gluon.rnn import ZoneoutCell
 
 from gluonts.core.component import DType, validated
+from gluonts.itertools import prod
 from gluonts.mx import Tensor
 from gluonts.mx.block.dropout import RNNZoneoutCell, VariationalZoneoutCell
 from gluonts.mx.block.feature import FeatureEmbedder
@@ -31,13 +32,6 @@ from gluonts.mx.distribution import Distribution, DistributionOutput
 from gluonts.mx.distribution.distribution import getF
 from gluonts.mx.util import weighted_average, mx_switch
 from mxnet import autograd
-
-
-def prod(xs):
-    p = 1
-    for x in xs:
-        p *= x
-    return p
 
 
 class DeepARNetwork(mx.gluon.HybridBlock):
@@ -1102,9 +1096,7 @@ class DeepARPredictionNetwork(DeepARNetwork):
             repeated_past_target = F.concat(
                 repeated_past_target, new_samples, dim=1
             )
-            repeated_past_observed_values = F.concat(
-                repeated_past_target, F.ones_like(new_samples), dim=1
-            )
+
             future_samples.append(new_samples)
 
         # (batch_size * num_samples, prediction_length, *target_shape)

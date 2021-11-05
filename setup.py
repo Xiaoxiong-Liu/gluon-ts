@@ -54,6 +54,19 @@ def find_requirements(filename):
         ]
 
 
+def get_version_and_cmdclass(version_file):
+    with open(version_file) as fobj:
+        code = fobj.read()
+
+    globals_ = {"__file__": str(version_file)}
+    exec(code, globals_)
+
+    return globals_["__version__"], globals_["cmdclass"]()
+
+
+version, version_cmdclass = get_version_and_cmdclass("src/gluonts/_version.py")
+
+
 class TypeCheckCommand(distutils.cmd.Command):
     """A custom command to run MyPy on the project sources."""
 
@@ -193,7 +206,7 @@ dev_require = (
 
 setup_kwargs: dict = dict(
     name="gluonts",
-    use_scm_version={"fallback_version": "0.0.0"},
+    version=version,
     description=(
         "GluonTS is a Python toolkit for probabilistic time series modeling, "
         "built around MXNet."
@@ -222,13 +235,41 @@ setup_kwargs: dict = dict(
     entry_points=dict(
         gluonts_forecasters=[
             "deepar=gluonts.model.deepar:DeepAREstimator",
-            "r=gluonts.model.r_forecast:RForecastPredictor [R]",
-            "prophet=gluonts.model.prophet:ProphetPredictor [Prophet]",
+            "DeepAR=gluonts.model.deepar:DeepAREstimator",
+            "DeepFactor=gluonts.model.deep_factor:DeepFactorEstimator",
+            "DeepState=gluonts.model.deepstate:DeepStateEstimator",
+            "DeepVAR=gluonts.model.deepvar:DeepVAREstimator",
+            "GaussianProcess=gluonts.model.gp_forecaster:GaussianProcessEstimator",
+            "GPVAR=gluonts.model.gpvar:GPVAREstimator",
+            "LSTNet=gluonts.model.lstnet:LSTNetEstimator",
+            "NBEATS=gluonts.model.n_beats:NBEATSEstimator",
+            "NBEATSEnsemble=gluonts.model.n_beats:NBEATSEnsembleEstimator",
+            "NPTS=gluonts.model.npts:NPTSPredictor",
+            "Rotbaum=gluonts.model.rotbaum:TreeEstimator",
+            "SelfAttention=gluonts.model.san:SelfAttentionEstimator",
+            "SeasonalNaive=gluonts.model.seasonal_naive:SeasonalNaivePredictor",
+            "MQCNN=gluonts.model.seq2seq:MQCNNEstimator",
+            "MQRNN=gluonts.model.seq2seq:MQRNNEstimator",
+            "Seq2Seq=gluonts.model.seq2seq:Seq2SeqEstimator",
+            "SimpleFeedForward=gluonts.model.simple_feedforward:SimpleFeedForwardEstimator",
+            "TFT=gluonts.model.tft:TemporalFusionTransformerEstimator",
+            "DeepTPP=gluonts.model.tpp:DeepTPPEstimator",
+            "Transformer=gluonts.model.transformer:TransformerEstimator",
+            "Constant=gluonts.model.trivial.constant:ConstantPredictor",
+            "ConstantValue=gluonts.model.trivial.constant:ConstantValuePredictor",
+            "Identity=gluonts.model.trivial.identity:IdentityPredictor",
+            "Mean=gluonts.model.trivial.mean:MeanEstimator",
+            "MeanPredictor=gluonts.model.trivial.mean:MeanPredictor",
+            "MovingAverage=gluonts.model.trivial.mean:MovingAveragePredictor",
+            "WaveNet=gluonts.model.wavenet:WaveNetEstimator",
+            # "r=gluonts.model.r_forecast:RForecastPredictor [R]",
+            # "prophet=gluonts.model.prophet:ProphetPredictor [Prophet]",
         ]
     ),
     cmdclass={
         "type_check": TypeCheckCommand,
         "style_check": StyleCheckCommand,
+        **version_cmdclass,
     },
 )
 

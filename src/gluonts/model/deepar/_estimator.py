@@ -12,7 +12,7 @@
 # permissions and limitations under the License.
 
 from functools import partial
-from typing import List, Optional, Callable
+from typing import List, Optional
 
 import numpy as np
 from mxnet.gluon import HybridBlock
@@ -26,6 +26,7 @@ from gluonts.dataset.loader import (
     ValidationDataLoader,
 )
 from gluonts.dataset.stat import calculate_dataset_statistics
+from gluonts.env import env
 from gluonts.model.predictor import Predictor
 from gluonts.mx.batchify import as_in_context, batchify
 from gluonts.mx.distribution import DistributionOutput, StudentTOutput
@@ -33,6 +34,7 @@ from gluonts.mx.model.estimator import GluonEstimator
 from gluonts.mx.model.predictor import RepresentableBlockPredictor
 from gluonts.mx.trainer import Trainer
 from gluonts.mx.util import copy_parameters, get_hybrid_forward_input_names
+from gluonts.support.util import maybe_len
 from gluonts.time_feature import (
     TimeFeature,
     get_lags_for_frequency,
@@ -209,9 +211,6 @@ class DeepAREstimator(GluonEstimator):
             dropoutcell_type in supported_dropoutcell_types
         ), f"`dropoutcell_type` should be one of {supported_dropoutcell_types}"
         assert dropout_rate >= 0, "The value of `dropout_rate` should be >= 0"
-        assert (cardinality and use_feat_static_cat) or (
-            not (cardinality or use_feat_static_cat)
-        ), "You should set `cardinality` if and only if `use_feat_static_cat=True`"
         assert cardinality is None or all(
             [c > 0 for c in cardinality]
         ), "Elements of `cardinality` should be > 0"
@@ -401,7 +400,8 @@ class DeepAREstimator(GluonEstimator):
         **kwargs,
     ) -> DataLoader:
         input_names = get_hybrid_forward_input_names(DeepARTrainingNetwork)
-        instance_splitter = self._create_instance_splitter("training")
+        with env._let(max_idle_transforms=maybe_len(data) or 0):
+            instance_splitter = self._create_instance_splitter("training")
         return TrainDataLoader(
             dataset=data,
             transform=instance_splitter + SelectFields(input_names),
@@ -417,14 +417,13 @@ class DeepAREstimator(GluonEstimator):
         **kwargs,
     ) -> DataLoader:
         input_names = get_hybrid_forward_input_names(DeepARTrainingNetwork)
-        instance_splitter = self._create_instance_splitter("validation")
+        with env._let(max_idle_transforms=maybe_len(data) or 0):
+            instance_splitter = self._create_instance_splitter("validation")
         return ValidationDataLoader(
             dataset=data,
             transform=instance_splitter + SelectFields(input_names),
             batch_size=self.batch_size,
             stack_fn=partial(batchify, ctx=self.trainer.ctx, dtype=self.dtype),
-            decode_fn=partial(as_in_context, ctx=self.trainer.ctx),
-            **kwargs,
         )
 
     def create_training_network(self) -> DeepARTrainingNetwork:

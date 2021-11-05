@@ -3,7 +3,7 @@ name: Docs
 on: [push, pull_request]
 
 jobs:
-  build:
+  docs-build:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,7 +34,7 @@ jobs:
 
     - name: Doctests
       run: |
-        pytest --doctest-modules src/gluonts
+        pytest --doctest-modules src/gluonts --ignore-glob="**/nursery/**"
 
     - name: Build docs
       run: |

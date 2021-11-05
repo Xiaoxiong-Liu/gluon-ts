@@ -17,18 +17,17 @@ from pathlib import Path
 from typing import NamedTuple
 
 from gluonts import json
-from gluonts.core.exception import GluonTSDataError
 from gluonts.dataset.util import get_bounds_for_mp_data_loading
+from gluonts.exceptions import GluonTSDataError
 
 
 def load(file_obj):
-    for line in file_obj:
-        yield json.loads(line)
+    return map(json.loads, file_obj)
 
 
 def dump(objects, file_obj):
     for object_ in objects:
-        file_obj.writeline(json.dumps(object_))
+        json.dump(object_, file_obj, nl=True)
 
 
 class Span(NamedTuple):
